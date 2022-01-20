@@ -120,7 +120,7 @@ int main (int argc, char* argv[]) {
 	short* samples = new short[audioFile.frames() << 1];
 	audioFile.readf(samples, audioFile.frames());
 
-	fftw_complex in[ws] = {}, out[ws];
+	fftw_complex in[1024] = {}, out[ws];
 	fftw_plan plan;
 	double power[ws/2];
 	plan = fftw_plan_dft_1d(ws, in, out, FFTW_FORWARD, FFTW_ESTIMATE);

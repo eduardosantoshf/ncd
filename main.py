@@ -3,6 +3,7 @@ import sox
 import argparse
 import os
 import gzip
+import time
 
 class Main:
     
@@ -11,6 +12,22 @@ class Main:
         self.tfm = sox.Transformer()
         self.ndc = dict()
         self.cbn = sox.Combiner()
+
+
+    def trim_sample(self):
+        # trim audio
+        self.tfm.trim(0.0, 10.0)
+
+        # apply compression
+        self.tfm.compand()
+
+        # output
+        self.tfm.build_file("examples/" + self.sample_file, 'test_trim.wav')
+
+        self.tfm = sox.Transformer()
+
+        self.sample_file = 'test_trim.wav'
+
 
     # function to trim audio and save the trimmed version
     def trim_samples(self, start, end):
@@ -30,12 +47,7 @@ class Main:
                 self.tfm.build_file("examples/{}".format(file), 'trimmed/{}_trimmed.wav'.format(file.split('.')[0]))
 
                 self.tfm = sox.Transformer()
-        
 
-        self.tfm.trim(start, end)
-        self.tfm.build_file("examples/sample01.wav", 'test_trim.wav')
-
-        print("Done")
 
     def calculate_ndc(self):
 
@@ -52,38 +64,72 @@ class Main:
                         'concatenate'
                     )
 
-                    f_out_test = gzip.open('compressed/' + file + '.gz', 'wb')
-                    f_out_test.writelines(f)
-                    test_size = os.path.getsize('compressed/' + file + '.gz')
+                    ###################################
+                    #            DB File              #
+                    ###################################
 
+                    #open compressed file
+                    f_out_test = gzip.open('compressed/' + file.split(".")[0] + '.freqs.gz', 'wb')
+
+                    # turn audio into frequencies
+                    os.system("./GetMaxFreqs/src/GetMaxFreqs -w test.freqs trimmed/{}".format(file))
+
+                    # write in compressed file
+                    f_in = open("test.freqs", "rb")
+                    f_out_test.writelines(f_in)
+                    f_in.close()
                     f_out_test.close()
+                    os.system("rm test.freqs")
 
-                    f_out_sample = gzip.open(self.sample_file + '.gz', 'wb')
-                    f_in_sample = open(self.sample_file, "rb")
-                    f_out_sample.writelines(f_in_sample)
-                    sample_size = os.path.getsize(self.sample_file + '.gz')
+                    # get file size
+                    test_size = os.path.getsize('compressed/' + file.split(".")[0] + '.freqs.gz') * 8
 
+
+                    ###################################
+                    #           Sample File           #
+                    ###################################
+
+                    #open compressed file
+                    f_out_sample = gzip.open(self.sample_file.split(".")[0] + '.freqs.gz', 'wb')
+
+                    # turn audio into frequencies
+                    os.system("./GetMaxFreqs/src/GetMaxFreqs -w test.freqs " + self.sample_file)
+
+                    # write in compressed file
+                    with open("test.freqs", "rb") as freqs:
+                        f_out_sample.writelines(freqs)
                     f_out_sample.close()
+                    os.system("rm test.freqs")
 
-                    f_out = gzip.open('join.wav.gz', 'wb')
-                    f_in = open('join.wav', "rb")
-                    f_out.writelines(f_in)                   
-                    file_size = os.path.getsize('join.wav.gz')
+                    # get file size
+                    sample_size = os.path.getsize(self.sample_file.split(".")[0] + '.freqs.gz')
 
-                    f_out.close()
-
-                    print(file)
-                    print(file_size)
-                    print(test_size)
-                    print(sample_size)
-                    print("----------")
                     
+                    ###################################
+                    #       Concatenated file         #
+                    ###################################
+
+                    #open compressed file
+                    f_out = gzip.open('join.freqs.gz', 'wb')
+
+                    # turn audio into frequencies
+                    os.system("./GetMaxFreqs/src/GetMaxFreqs -w test.freqs join.wav")
+
+                    # write in compressed file
+                    with open("test.freqs", "rb") as freqs:
+                        f_out.writelines(freqs)
+                    f_out.close()
+                    os.system("rm test.freqs")
+
+                    # get file size      
+                    file_size = os.path.getsize('join.freqs.gz')
 
                     # calculate NDC
                     self.ndc[file] = (file_size - min(test_size, sample_size)) / max(test_size, sample_size)
 
+                    # remove temporary concatenated file
                     os.remove('join.wav')
-                    os.remove('join.wav.gz')
+                    os.remove('join.freqs.gz')
 
         print(self.ndc)
         music = min(self.ndc, key = self.ndc.get)
@@ -94,7 +140,7 @@ class Main:
 if __name__== "__main__":
     
     parser = argparse.ArgumentParser(description='Recognize music.')
-    parser.add_argument("--sample", metavar="file", type=str, default="test_trim.wav", help='Sample file')
+    parser.add_argument("--sample", metavar="file", type=str, default="sample01.wav", help='Sample file')
     parser.add_argument('--start_trim', type=float, default=5, help='Seconds to start trim')
     parser.add_argument('--end_trim', type=float, default=10, help='Seconds to stop trim')
 
@@ -109,6 +155,7 @@ if __name__== "__main__":
     end_trim = args["end_trim"]
 
     main = Main(filename)
+    main.trim_sample()
     main.trim_samples(0.0, 10.0)
 
     print(main.calculate_ndc())
