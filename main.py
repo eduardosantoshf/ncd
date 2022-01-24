@@ -4,15 +4,16 @@ import sys
 import sox
 import argparse
 import os
-import gzip
-import time
+
+from compressor import Compressor
 
 class Main:
     
-    def __init__(self, sample_file, threshold, start_trim):
+    def __init__(self, sample_file, threshold, start_trim, compressor):
         self.sample_file = sample_file
         self.threshold = threshold
         self.start_trim = start_trim
+        self.compressor = compressor
         self.tfm = sox.Transformer()
         self.ndc = dict()
 
@@ -63,7 +64,7 @@ class Main:
 
                     test_file = open("freqs/{}.freqs".format(output_file), "rb")
                     test_size_read = test_file.read()
-                    test_size = len(gzip.compress(test_size_read))
+                    test_size = len(self.compressor.compress(test_size_read))
 
                     ###################################
                     #           Sample File           #
@@ -74,14 +75,14 @@ class Main:
 
                     sample_file = open("sample/sample.freqs", "rb")
                     sample_file_read = sample_file.read()
-                    sample_size = len(gzip.compress(sample_file_read))
+                    sample_size = len(self.compressor.compress(sample_file_read))
                     
                     ###################################
                     #       Concatenated file         #
                     ###################################
 
                     # join file size
-                    file_size = len(gzip.compress(test_size_read + sample_file_read))
+                    file_size = len(self.compressor.compress(test_size_read + sample_file_read))
 
                     # calculate NDC
                     self.ndc[file] = (file_size - min(test_size, sample_size)) / max(test_size, sample_size)
@@ -98,6 +99,7 @@ if __name__== "__main__":
     parser.add_argument("--sample", metavar="file", type=str, default="examples/sample01.wav", help='Sample file')
     parser.add_argument('--start_trim', type=float, default=0, help='Seconds to start trim')
     parser.add_argument('--threshold', type=int, default=50, help='Percentage of the song to test')
+    parser.add_argument('--compressor', type=str, default="gzip", help='Compression type (gzip, bzip2, lzma).')
 
     args = vars(parser.parse_args())
     
@@ -116,8 +118,12 @@ if __name__== "__main__":
     # start trim time
     start_trim = args["start_trim"]
 
+    # compressor
+    comp_instance = Compressor(args["compressor"])
+    compressor = comp_instance.select_compressor()
+
     # create main object
-    main = Main(filename, threshold_sample, start_trim)
+    main = Main(filename, threshold_sample, start_trim, compressor)
 
     # trim sample file
     main.trim_sample()
