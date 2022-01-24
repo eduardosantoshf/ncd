@@ -9,9 +9,10 @@ import time
 
 class Main:
     
-    def __init__(self, sample_file, threshold):
+    def __init__(self, sample_file, threshold, start_trim):
         self.sample_file = sample_file
         self.threshold = threshold
+        self.start_trim = start_trim
         self.tfm = sox.Transformer()
         self.ndc = dict()
 
@@ -20,27 +21,27 @@ class Main:
         # sample duration
         audio_trim = sox.file_info.duration(self.sample_file) * self.threshold
 
-        # trim audio
-        self.tfm.trim(0.0, audio_trim)
+        try:
+            # check if start time is smaller than audio duration
+            if self.start_trim > sox.file_info.duration(self.sample_file):
+                raise ValueError("Start time must be smaller than song duration!")
 
-        # output
-        self.tfm.build_file(self.sample_file, 'test_trim.wav')
+            # trim audio
+            self.tfm.trim(self.start_trim, audio_trim + self.start_trim)
 
-        self.sample_file = 'test_trim.wav'
+        # if trim fails
+        except(ValueError) as E:
+            print("Start time of the trim must be smaller than the end time!")
+            exit()
 
+        # remove previous sample file if there
+        if os.path.exists("sample/sample.wav"):
+            os.remove("sample/sample.wav")
+        
+        # save trimmed file
+        self.tfm.build_file(self.sample_file, 'sample/sample.wav')
 
-   # function to trim audio and save the trimmed version
-    #def trim_samples(self, start, end):#
-    #    filenames = [file for file in os.listdir("examples/")]#
-    #    for file in filenames:
-    #        with open("examples/" + file, "r") as f:#
-    #            # trim audio
-    #            self.tfm.trim(start, end)#
-    #            # apply compression
-    #            self.tfm.compand()#
-    #            # output file
-    #            self.tfm.build_file("examples/{}".format(file), 'trimmed/{}_trimmed.wav'.format(file.split('.')[0]))#
-    #            self.tfm = sox.Transformer()
+        self.sample_file = 'sample/sample.wav'
 
 
     def calculate_ndc(self):
@@ -51,31 +52,29 @@ class Main:
             if file != '.DS_Store':
                 with open("examples/" + file, "rb") as f:
 
+                    output_file = file.split(".")[0]
+
                     ###################################
                     #            DB File              #
                     ###################################
 
                     # turn audio into frequencies
-                    os.system("./GetMaxFreqs/src/GetMaxFreqs -w test.freqs examples/{}".format(file))
+                    os.system("./GetMaxFreqs/src/GetMaxFreqs -w freqs/{}.freqs examples/{}".format(output_file, file))
 
-                    test_file = open("test.freqs", "rb")
+                    test_file = open("freqs/{}.freqs".format(output_file), "rb")
                     test_size_read = test_file.read()
                     test_size = len(gzip.compress(test_size_read))
-
-                    os.system("rm test.freqs")
 
                     ###################################
                     #           Sample File           #
                     ###################################
 
                     # turn audio into frequencies
-                    os.system("./GetMaxFreqs/src/GetMaxFreqs -w test.freqs " + self.sample_file)
+                    os.system("./GetMaxFreqs/src/GetMaxFreqs -w sample/sample.freqs {}".format(self.sample_file))
 
-                    sample_file = open("test.freqs", "rb")
+                    sample_file = open("sample/sample.freqs", "rb")
                     sample_file_read = sample_file.read()
                     sample_size = len(gzip.compress(sample_file_read))
-
-                    os.system("rm test.freqs")
                     
                     ###################################
                     #       Concatenated file         #
@@ -96,26 +95,33 @@ class Main:
 if __name__== "__main__":
     
     parser = argparse.ArgumentParser(description='Recognize music.')
-    parser.add_argument("--sample", metavar="file", type=str, default="sample01.wav", help='Sample file')
-    parser.add_argument('--start_trim', type=float, default=5, help='Seconds to start trim')
-    parser.add_argument('--end_trim', type=float, default=10, help='Seconds to stop trim')
+    parser.add_argument("--sample", metavar="file", type=str, default="examples/sample01.wav", help='Sample file')
+    parser.add_argument('--start_trim', type=float, default=0, help='Seconds to start trim')
     parser.add_argument('--threshold', type=int, default=50, help='Percentage of the song to test')
 
     args = vars(parser.parse_args())
     
+    # Sample file handling
     filename = args["sample"]
 
+    try:
+        f = open(filename, 'r')
+    except(IOError) as E:
+        print("Sample file dies not exist!")
+        exit()
+
+    # threshold precentage
     threshold_sample = args["threshold"] * 0.01
 
-    #if not os.path.exists(filename):
-    #    raise Exception("Sample file dies not exist!")
-
+    # start trim time
     start_trim = args["start_trim"]
-    end_trim = args["end_trim"]
 
-    main = Main(filename, threshold_sample)
+    # create main object
+    main = Main(filename, threshold_sample, start_trim)
+
+    # trim sample file
     main.trim_sample()
-    #main.trim_samples(0.0, 10.0)
 
+    # predict song
     print(main.calculate_ndc())
     
