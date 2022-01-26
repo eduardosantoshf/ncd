@@ -9,11 +9,12 @@ from compressor import Compressor
 
 class Main:
     
-    def __init__(self, sample_file, threshold, start_trim, compressor):
+    def __init__(self, sample_file, threshold, start_trim, compressor, noise):
         self.sample_file = sample_file
         self.threshold = threshold
         self.start_trim = start_trim
         self.compressor = compressor
+        self.noise = noise
         self.tfm = sox.Transformer()
         self.ndc = dict()
 
@@ -69,6 +70,14 @@ class Main:
                     ###################################
                     #           Sample File           #
                     ###################################
+                    if self.noise > 1 or self.noise < 0:
+                        raise ValueError("Noise must be between 0 and 1!")
+                    
+                    if self.noise > 0:
+                        cmd = f"sox sample/sample.wav -p synth whitenoise vol {self.noise} | sox -m sample/sample.wav - sample/sample_noise.wav"
+                        os.system(cmd)
+                        self.sample_file = 'sample/sample_noise.wav'
+
 
                     # turn audio into frequencies
                     os.system("./GetMaxFreqs/src/GetMaxFreqs -w sample/sample.freqs {}".format(self.sample_file))
@@ -100,6 +109,7 @@ if __name__== "__main__":
     parser.add_argument('--start_trim', type=float, default=0, help='Seconds to start trim')
     parser.add_argument('--threshold', type=int, default=50, help='Percentage of the song to test')
     parser.add_argument('--compressor', type=str, default="gzip", help='Compression type (gzip, bzip2, lzma).')
+    parser.add_argument('--noise', type=float, default=0, help="Noise value. Default is no noise")
 
     args = vars(parser.parse_args())
     
@@ -122,8 +132,11 @@ if __name__== "__main__":
     comp_instance = Compressor(args["compressor"])
     compressor = comp_instance.select_compressor()
 
+    # noise
+    noise = args["noise"]
+
     # create main object
-    main = Main(filename, threshold_sample, start_trim, compressor)
+    main = Main(filename, threshold_sample, start_trim, compressor, noise)
 
     # trim sample file
     main.trim_sample()
