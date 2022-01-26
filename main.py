@@ -48,6 +48,27 @@ class Main:
 
     def calculate_ndc(self):
 
+        ###################################
+        #           Sample File           #
+        ###################################
+        if self.noise > 1 or self.noise < 0:
+            raise ValueError("Noise must be between 0 and 1!")
+        
+        if self.noise > 0:
+            cmd = f"sox sample/sample.wav -p synth whitenoise vol {self.noise} | sox -m sample/sample.wav - sample/sample_noise.wav"
+            os.system(cmd)
+            self.sample_file = 'sample/sample_noise.wav'
+
+
+        # turn audio into frequencies
+        os.system("./GetMaxFreqs/src/GetMaxFreqs -w sample/sample.freqs {}".format(self.sample_file))
+
+        sample_file = open("sample/sample.freqs", "rb")
+        sample_file_read = sample_file.read()
+        sample_size = len(self.compressor.compress(sample_file_read))
+
+
+        # db files
         filenames = [file for file in os.listdir("examples/")]
 
         for file in filenames:
@@ -66,25 +87,6 @@ class Main:
                     test_file = open("freqs/{}.freqs".format(output_file), "rb")
                     test_size_read = test_file.read()
                     test_size = len(self.compressor.compress(test_size_read))
-
-                    ###################################
-                    #           Sample File           #
-                    ###################################
-                    if self.noise > 1 or self.noise < 0:
-                        raise ValueError("Noise must be between 0 and 1!")
-                    
-                    if self.noise > 0:
-                        cmd = f"sox sample/sample.wav -p synth whitenoise vol {self.noise} | sox -m sample/sample.wav - sample/sample_noise.wav"
-                        os.system(cmd)
-                        self.sample_file = 'sample/sample_noise.wav'
-
-
-                    # turn audio into frequencies
-                    os.system("./GetMaxFreqs/src/GetMaxFreqs -w sample/sample.freqs {}".format(self.sample_file))
-
-                    sample_file = open("sample/sample.freqs", "rb")
-                    sample_file_read = sample_file.read()
-                    sample_size = len(self.compressor.compress(sample_file_read))
                     
                     ###################################
                     #       Concatenated file         #
