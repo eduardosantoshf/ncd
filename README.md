@@ -1,5 +1,7 @@
 # TAI - Lab work 3
 
+Both the report and the video presentation are in the root folder, called "report.pdf" and "presentation.mp4".
+
 ### How to run
 
 #### main.py
