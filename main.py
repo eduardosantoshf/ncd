@@ -62,7 +62,7 @@ class Main:
 
 
         # turn audio into frequencies
-        os.system("./GetMaxFreqs/src/GetMaxFreqs -w sample/sample.freqs {}".format(self.sample_file))
+        os.system("./GetMaxFreqs/bin/GetMaxFreqs -w sample/sample.freqs {}".format(self.sample_file))
 
         sample_file = open("sample/sample.freqs", "rb")
         sample_file_read = sample_file.read()
@@ -73,7 +73,7 @@ class Main:
         filenames = [file for file in os.listdir("examples/")]
 
         for file in filenames:
-            if file != '.DS_Store':
+            if file.endswith(".wav"):
                 with open("examples/" + file, "rb") as f:
 
                     output_file = file.split(".")[0]
@@ -83,7 +83,7 @@ class Main:
                     ###################################
 
                     # turn audio into frequencies
-                    os.system("./GetMaxFreqs/src/GetMaxFreqs -w freqs/{}.freqs examples/{}".format(output_file, file))
+                    os.system("./GetMaxFreqs/bin/GetMaxFreqs -w freqs/{}.freqs examples/{}".format(output_file, file))
 
                     test_file = open("freqs/{}.freqs".format(output_file), "rb")
                     test_size_read = test_file.read()
@@ -107,6 +107,9 @@ class Main:
 
         y_values = []
 
+        if not os.path.exists("./plots"):
+            os.mkdir("./plots")
+
         if type == 'n':
             for noise in values:
                 cmd = f"sox sample/sample.wav -p synth whitenoise vol {noise} | sox -m sample/sample.wav - plots/sample_noise.wav"
@@ -114,7 +117,7 @@ class Main:
                 self.sample_file = 'plots/sample_noise.wav'
 
                 # turn audio into frequencies
-                os.system("./GetMaxFreqs/src/GetMaxFreqs -w plots/sample.freqs {}".format(self.sample_file))
+                os.system("./GetMaxFreqs/bin/GetMaxFreqs -w plots/sample.freqs {}".format(self.sample_file))
 
                 sample_file = open("plots/sample.freqs", "rb")
                 sample_file_read = sample_file.read()
@@ -127,7 +130,7 @@ class Main:
                 ###################################
 
                 # turn audio into frequencies
-                os.system("./GetMaxFreqs/src/GetMaxFreqs -w plots/{}.freqs examples/{}".format(output_file, song))
+                os.system("./GetMaxFreqs/bin/GetMaxFreqs -w plots/{}.freqs examples/{}".format(output_file, song))
 
                 test_file = open("plots/{}.freqs".format(output_file), "rb")
                 test_size_read = test_file.read()
@@ -156,7 +159,7 @@ class Main:
                 self.tfm.build_file("examples/" + song, 'plots/sample.wav')
 
                 # turn audio into frequencies
-                os.system("./GetMaxFreqs/src/GetMaxFreqs -w plots/sample.freqs plots/sample.wav")
+                os.system("./GetMaxFreqs/bin/GetMaxFreqs -w plots/sample.freqs plots/sample.wav")
 
                 sample_file = open("plots/sample.freqs", "rb")
                 sample_file_read = sample_file.read()
@@ -169,7 +172,7 @@ class Main:
                 ###################################
 
                 # turn audio into frequencies
-                os.system("./GetMaxFreqs/src/GetMaxFreqs -w plots/{}.freqs examples/{}".format(output_file, song))
+                os.system("./GetMaxFreqs/bin/GetMaxFreqs -w plots/{}.freqs examples/{}".format(output_file, song))
 
                 test_file = open("plots/{}.freqs".format(output_file), "rb")
                 test_size_read = test_file.read()
