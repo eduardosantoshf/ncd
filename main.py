@@ -99,7 +99,6 @@ class Main:
                     # calculate NDC
                     self.ndc[file] = (file_size - min(test_size, sample_size)) / max(test_size, sample_size)
 
-        print(self.ndc)
         music = min(self.ndc, key = self.ndc.get)
 
         return music
@@ -201,8 +200,8 @@ if __name__== "__main__":
     parser.add_argument('--threshold', type=int, default=50, help='Percentage of the song to test')
     parser.add_argument('--compressor', type=str, default="gzip", help='Compression type (gzip, bzip2, lzma).')
     parser.add_argument('--noise', type=float, default=0, help="Noise value. Default is no noise")
-    parser.add_argument("--st", action='store_true')
-    parser.add_argument("--n", action='store_true')
+    parser.add_argument("--st", action='store_true', help="Plot graphic with variation of sample size.")
+    parser.add_argument("--n", action='store_true', help="Plot graphic with variation of noise.")
 
     args = vars(parser.parse_args())
     
@@ -236,7 +235,7 @@ if __name__== "__main__":
 
     # predict song
     selected_song = main.calculate_ndc()
-    print(selected_song)
+    print("A sample pertence ao ficheiro: " + str(selected_song))
 
     # plots
     if args['n']:
