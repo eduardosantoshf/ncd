@@ -4,6 +4,9 @@ The objective is to use the Normalized Compression Distance (NCD), with multiple
 
 Both the report and the video presentation are in the root folder, called "report.pdf" and "presentation.mp4".
 
+## Course
+This project was developed under the [Algorithmic Theory of Information](https://www.ua.pt/en/uc/13643) course of [University of Aveiro](https://www.ua.pt/).
+
 ## Authors
 
 * [Bruno Bastos](https://github.com/BrunosBastos) - 93302
