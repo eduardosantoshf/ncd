@@ -1,4 +1,4 @@
-# TAI - Lab work 3
+# TAI Third Assignment
 
 The objective is to use the Normalized Compression Distance (NCD), with multiple compressors, in order to obtain the similarity between a small music sample and every complete music in the dataset. The sample will then be assigned to the one which has the smaller average distance for all the compressors.
 
@@ -6,6 +6,9 @@ Both the report and the video presentation are in the root folder, called "repor
 
 ## Course
 This project was developed under the [Algorithmic Theory of Information](https://www.ua.pt/en/uc/13643) course of [University of Aveiro](https://www.ua.pt/).
+
+## Grade 
+This project's grade was **17** out of 20.
 
 ## Authors
 
